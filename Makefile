@@ -1,4 +1,6 @@
-.PHONY: demo up down load-test lint typecheck test build-worker-pdf build-worker-tabular
+.PHONY: demo up down load-test lint typecheck test \
+        build-backend build-worker-pdf build-worker-tabular build-images \
+        kind-up kind-down
 
 demo:
 	pwsh -File scripts/demo.ps1
@@ -8,6 +10,12 @@ up:
 
 down:
 	pwsh -File scripts/down.ps1
+
+kind-up:
+	pwsh -File scripts/up.ps1 -Mode kind
+
+kind-down:
+	pwsh -File scripts/down.ps1 -Mode kind
 
 load-test:
 	pwsh -File scripts/load-test.ps1
@@ -21,9 +29,13 @@ typecheck:
 test:
 	uv run pytest
 
-# Optional: build images for APP_JOB_EXECUTION_MODE=kubernetes
+build-backend:
+	docker build -f backend/Dockerfile -t cern-ml-demo-backend:local .
+
 build-worker-pdf:
 	docker build -f workers/pdf/Dockerfile -t cern-ml-demo-worker-pdf:local .
 
 build-worker-tabular:
 	docker build -f workers/tabular/Dockerfile -t cern-ml-demo-worker-tabular:local .
+
+build-images: build-backend build-worker-pdf build-worker-tabular
