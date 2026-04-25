@@ -1,0 +1,61 @@
+# Custom vLLM ServingRuntime for KServe standard (raw-deployment) mode.
+# Gives explicit control over vLLM flags instead of relying on the upstream
+# ClusterServingRuntime that ships with KServe.
+#
+# CPU profile: --dtype float32, --max-model-len 2048, no tensor parallelism.
+# GPU profile: remove --dtype / --device overrides; add GPU resource limits
+#              and --tensor-parallel-size <N> in the container args.
+apiVersion: serving.kserve.io/v1alpha1
+kind: ServingRuntime
+metadata:
+  name: vllm-runtime
+  namespace: default
+spec:
+  supportedModelFormats:
+    - name: pytorch
+      version: "1"
+      autoSelect: true
+
+  protocolVersions:
+    - v1
+    - v2
+
+  containers:
+    - name: kserve-container
+      image: vllm/vllm-openai:v0.6.6
+      command: ["python", "-m", "vllm.entrypoints.openai.api_server"]
+      args:
+        - --model
+        - "$(MODEL_ID)"
+        - --served-model-name
+        - "$(MODEL_ID)"
+        - --port
+        - "8080"
+        - --dtype
+        - float32          # CPU-safe; switch to auto on GPU nodes
+        - --device
+        - cpu              # remove on GPU nodes
+        - --max-model-len
+        - "2048"           # fits small models in CPU RAM
+      env:
+        - name: MODEL_ID
+          value: "Qwen/Qwen2.5-0.5B-Instruct"
+      ports:
+        - containerPort: 8080
+          protocol: TCP
+      readinessProbe:
+        httpGet:
+          path: /health
+          port: 8080
+        initialDelaySeconds: 60
+        periodSeconds: 10
+        failureThreshold: 12
+      resources:
+        requests:
+          cpu: "2"
+          memory: 4Gi
+        limits:
+          cpu: "4"
+          memory: 8Gi
+          # Uncomment for GPU nodes:
+          # nvidia.com/gpu: "1"

@@ -1,0 +1,42 @@
+# KServe InferenceService: vLLM serving Qwen2.5-0.5B-Instruct
+#
+# Profiles:
+#   kserve-cpu  (default): CPU-only, small model, no GPU required.
+#     Requires ~6 GB RAM and ~4 vCPUs.  Set APP_LLM_PROVIDER=kserve.
+#
+#   gpu-notes (documented, not required locally):
+#     - Replace resources with nvidia.com/gpu: "1" limits
+#     - Remove --dtype float32 / --device cpu from vllm-runtime.yaml
+#     - Use a larger model (e.g. Qwen/Qwen2.5-7B-Instruct)
+#     - Add --tensor-parallel-size 2 for multi-GPU
+#
+# The backend reaches this endpoint at:
+#   http://vllm-predictor-default.default.svc.cluster.local/v1
+# (KServe raw-deployment mode service naming convention)
+# Set APP_KSERVE_BASE_URL to match.
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: vllm-predictor
+  namespace: default
+  annotations:
+    # Raw-deployment mode: no Knative, no queue-proxy sidecar.
+    serving.kserve.io/deploymentMode: RawDeployment
+spec:
+  predictor:
+    minReplicas: 1
+    maxReplicas: 3          # HPA target; KServe creates an HPA automatically
+    scaleTarget: 10         # scale when avg pending requests > 10
+    scaleMetric: concurrency
+    model:
+      modelFormat:
+        name: pytorch
+      runtime: vllm-runtime
+      storageUri: "hf://Qwen/Qwen2.5-0.5B-Instruct"
+      resources:
+        requests:
+          cpu: "2"
+          memory: 4Gi
+        limits:
+          cpu: "4"
+          memory: 8Gi

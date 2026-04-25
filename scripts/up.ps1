@@ -5,7 +5,9 @@ param(
     [string]$VolumeName    = "cern-ml-demo-minio-data",
     [string]$AccessKey     = "minioadmin",
     [string]$SecretKey     = "minioadmin",
-    [switch]$SkipBuild
+    [switch]$SkipBuild,
+    # Install KServe + deploy InferenceService (kserve-cpu profile)
+    [switch]$WithKServe
 )
 
 $ErrorActionPreference = "Stop"
@@ -97,10 +99,27 @@ kubectl rollout status deployment/minio --timeout=120s
 Write-Host "Waiting for backend..."
 kubectl rollout status deployment/cern-ml-demo-backend --timeout=120s
 
+if ($WithKServe) {
+    Write-Host "Installing KServe (this takes 3-5 minutes)..."
+    if (-not (Get-Command bash -ErrorAction SilentlyContinue)) {
+        throw "bash not found. KServe install script requires Git Bash or WSL."
+    }
+    bash "$Root/deploy/kserve/install.sh"
+    Write-Host "Deploying InferenceService (vllm-predictor)..."
+    kubectl apply -f "$Root\deploy\kserve\inferenceservice.yaml"
+    Write-Host "Waiting for InferenceService to become ready (may take 5-10 min for model download)..."
+    kubectl wait inferenceservice/vllm-predictor --for=condition=Ready --timeout=600s -n default
+}
+
 Write-Host ""
 Write-Host "Cluster is ready."
 Write-Host "  Backend:         http://localhost:8000"
 Write-Host "  MinIO API:       http://localhost:9000"
 Write-Host "  MinIO console:   http://localhost:9001"
+if ($WithKServe) {
+    Write-Host "  KServe/vLLM:     http://localhost:8080/v1"
+}
 Write-Host ""
-Write-Host "Run 'make demo' or 'scripts\demo.ps1 -Mode kind' to open the browser."
+Write-Host "Profiles:"
+Write-Host "  local-fast:  scripts\demo.ps1 -Profile local-fast"
+Write-Host "  kserve-cpu:  scripts\demo.ps1 -Profile kserve-cpu  (requires -WithKServe)"
