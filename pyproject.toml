@@ -3,19 +3,37 @@ name = "cern-ml-demo"
 version = "0.1.0"
 description = "CERN-oriented ML platform demo with FastAPI, Kubernetes Jobs, MinIO, and KServe/vLLM."
 requires-python = ">=3.12"
-dependencies = [
+dependencies = []
+
+[project.optional-dependencies]
+# Backend web service
+backend = [
     "boto3>=1.42.96",
     "fastapi>=0.136.1",
     "httpx>=0.28.1",
     "jinja2>=3.1.6",
     "kubernetes-asyncio>=35.0.1",
-    "polars>=1.40.1",
     "prometheus-client>=0.25.0",
     "pydantic-ai>=1.87.0",
     "pydantic-settings>=2.14.0",
-    "pymupdf>=1.27.2.3",
     "python-multipart>=0.0.26",
     "uvicorn[standard]>=0.46.0",
+]
+# Tabular (CSV) worker — minimal: storage + polars only
+worker-tabular = [
+    "boto3>=1.42.96",
+    "httpx>=0.28.1",
+    "polars>=1.40.1",
+    "prometheus-client>=0.25.0",
+    "pydantic-settings>=2.14.0",
+]
+# PDF worker — minimal: storage + pymupdf only
+worker-pdf = [
+    "boto3>=1.42.96",
+    "httpx>=0.28.1",
+    "prometheus-client>=0.25.0",
+    "pydantic-settings>=2.14.0",
+    "pymupdf>=1.27.2.3",
 ]
 
 [dependency-groups]

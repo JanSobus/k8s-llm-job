@@ -1,13 +1,17 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
 from dataclasses import dataclass
 from io import BytesIO
 from json import dumps, loads
-from typing import Any, Protocol, cast
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import boto3
 from boto3.session import Session
 from botocore.exceptions import ClientError
-from mypy_boto3_s3.client import S3Client
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3.client import S3Client
 
 from backend.app.config import Settings, get_settings
 
@@ -36,7 +40,7 @@ class MinioStorage:
     bucket: str
 
     @classmethod
-    def from_settings(cls, settings: Settings) -> "MinioStorage":
+    def from_settings(cls, settings: Settings) -> MinioStorage:
         session: Session = boto3.session.Session()
         client = cast(
             S3Client,

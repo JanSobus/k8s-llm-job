@@ -64,7 +64,10 @@ Assert-Command "kubectl" "winget install Kubernetes.kubectl"
 Assert-Docker
 
 # Create cluster if it doesn't exist
-$clusters = kind get clusters 2>$null
+$previousPreference = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+$clusters = kind get clusters 2>&1 | Where-Object { $_ -is [string] }
+$ErrorActionPreference = $previousPreference
 if ($clusters -notcontains "cern-ml-demo") {
     Write-Host "Creating kind cluster 'cern-ml-demo'..."
     kind create cluster --config "$Root\deploy\kind\cluster.yaml"
