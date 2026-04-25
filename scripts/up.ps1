@@ -93,11 +93,22 @@ kubectl apply -f "$Root\deploy\app\backend-rbac.yaml"
 kubectl apply -f "$Root\deploy\app\minio.yaml"
 kubectl apply -f "$Root\deploy\app\backend-deploy.yaml"
 
+# Observability
+Write-Host "Deploying Prometheus + Grafana..."
+kubectl create configmap grafana-dashboard-json `
+    "--from-file=cern-ml-demo.json=$Root\deploy\observability\grafana-dashboard.json" `
+    --dry-run=client -o yaml | kubectl apply -f -
+kubectl apply -f "$Root\deploy\observability\prometheus.yaml"
+
 # Wait for deployments
 Write-Host "Waiting for MinIO..."
 kubectl rollout status deployment/minio --timeout=120s
 Write-Host "Waiting for backend..."
 kubectl rollout status deployment/cern-ml-demo-backend --timeout=120s
+Write-Host "Waiting for Prometheus..."
+kubectl rollout status deployment/prometheus --timeout=120s
+Write-Host "Waiting for Grafana..."
+kubectl rollout status deployment/grafana --timeout=120s
 
 if ($WithKServe) {
     Write-Host "Installing KServe (this takes 3-5 minutes)..."
@@ -116,6 +127,8 @@ Write-Host "Cluster is ready."
 Write-Host "  Backend:         http://localhost:8000"
 Write-Host "  MinIO API:       http://localhost:9000"
 Write-Host "  MinIO console:   http://localhost:9001"
+Write-Host "  Prometheus:      http://localhost:9090"
+Write-Host "  Grafana:         http://localhost:3000  (admin/admin)"
 if ($WithKServe) {
     Write-Host "  KServe/vLLM:     http://localhost:8080/v1"
 }

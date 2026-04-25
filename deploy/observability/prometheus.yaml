@@ -1,0 +1,188 @@
+# Minimal Prometheus + Grafana stack for the cern-ml-demo kind cluster.
+# Scrapes the FastAPI /metrics endpoint and exposes dashboards on NodePort.
+#
+# Deploy: kubectl apply -f deploy/observability/prometheus.yaml
+# UI:     http://localhost:9090  (Prometheus)
+#         http://localhost:3000  (Grafana — admin/admin)
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: default
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    scrape_configs:
+      - job_name: cern-ml-backend
+        static_configs:
+          - targets: ['cern-ml-demo-backend.default.svc.cluster.local:8000']
+        metrics_path: /metrics
+
+      - job_name: kube-state-metrics
+        static_configs:
+          - targets: ['kube-state-metrics.kube-system.svc.cluster.local:8080']
+        honor_labels: true
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: default
+  labels:
+    app: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.53.0
+          args:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.path=/prometheus
+            - --web.enable-lifecycle
+          ports:
+            - containerPort: 9090
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+            - name: data
+              mountPath: /prometheus
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: config
+          configMap:
+            name: prometheus-config
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: default
+spec:
+  type: NodePort
+  selector:
+    app: prometheus
+  ports:
+    - port: 9090
+      targetPort: 9090
+      nodePort: 30909
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: default
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus.default.svc.cluster.local:9090
+        isDefault: true
+        access: proxy
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards-provider
+  namespace: default
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: default
+        folder: CERN ML Demo
+        type: file
+        options:
+          path: /var/lib/grafana/dashboards
+---
+# grafana-dashboard-json ConfigMap is created by up.ps1 via:
+#   kubectl create configmap grafana-dashboard-json \
+#     --from-file=cern-ml-demo.json=deploy/observability/grafana-dashboard.json \
+#     --dry-run=client -o yaml | kubectl apply -f -
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: default
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:11.0.0
+          env:
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: admin
+            - name: GF_PATHS_PROVISIONING
+              value: /etc/grafana/provisioning
+          ports:
+            - containerPort: 3000
+          volumeMounts:
+            - name: datasources
+              mountPath: /etc/grafana/provisioning/datasources
+            - name: dashboard-provider
+              mountPath: /etc/grafana/provisioning/dashboards
+            - name: dashboard-json
+              mountPath: /var/lib/grafana/dashboards
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+      volumes:
+        - name: datasources
+          configMap:
+            name: grafana-datasources
+        - name: dashboard-provider
+          configMap:
+            name: grafana-dashboards-provider
+        - name: dashboard-json
+          configMap:
+            name: grafana-dashboard-json
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: default
+spec:
+  type: NodePort
+  selector:
+    app: grafana
+  ports:
+    - port: 3000
+      targetPort: 3000
+      nodePort: 30300
