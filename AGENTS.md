@@ -37,3 +37,9 @@ This project is a portfolio demo for the CERN IT-CD-PI-2026-63-LD Machine Learni
 - Run `uv run ruff check .`, `uv run pyright`, and `uv run pytest` after substantive Python edits.
 - Keep tests focused on provider selection, configuration, route smoke checks, and worker behavior as features are added.
 - Do not spend time on production auth, a polished frontend, a third worker, RAG, or a Helm chart unless explicitly requested.
+
+## Git commit attribution (strict)
+
+- **Never add `Co-Authored-By: Claude`, `Co-Authored-By: <any AI>`, or any "Generated with Claude Code" / similar AI-attribution lines to commit messages.** Author and committer must be the human user only.
+- Do not add any equivalent trailer that names an AI model, the agent harness, or this assistant.
+- This rule applies to all commits and to any future PR descriptions or release notes generated for this repository.
