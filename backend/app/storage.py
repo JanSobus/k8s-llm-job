@@ -42,8 +42,8 @@ class MinioStorage:
     @classmethod
     def from_settings(cls, settings: Settings) -> MinioStorage:
         session: Session = boto3.session.Session()
-        client = cast(
-            S3Client,
+        client: S3Client = cast(  # type: ignore[type-arg]
+            Any,
             cast(Any, session.client)(  # pyright: ignore[reportUnknownMemberType]
                 "s3",
                 endpoint_url=settings.minio_endpoint,
