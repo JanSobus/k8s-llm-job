@@ -37,3 +37,19 @@ def test_chat_fake_mode() -> None:
 
     assert response.status_code == 200
     assert "fake openai" in response.text
+
+
+def test_metrics_endpoint_exposes_custom_metrics() -> None:
+    client = TestClient(app)
+
+    response = client.get("/metrics")
+
+    assert response.status_code == 200
+    assert "text/plain" in response.headers["content-type"]
+    body = response.text
+    # All five metric families must be registered, even before any traffic
+    assert "cern_ml_chat_requests_total" in body
+    assert "cern_ml_chat_latency_seconds" in body
+    assert "cern_ml_active_jobs" in body
+    assert "cern_ml_job_completions_total" in body
+    assert "cern_ml_job_duration_seconds" in body
