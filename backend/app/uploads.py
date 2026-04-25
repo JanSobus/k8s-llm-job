@@ -9,9 +9,9 @@ from kubernetes_asyncio.client import ApiException  # type: ignore[import-untype
 
 from backend.app.config import JobExecutionMode, Settings, get_settings
 from backend.app.jobs import JobStore, get_job_store
-from backend.app.metrics import ACTIVE_JOBS
 from backend.app.k8s_jobs import create_kubernetes_worker_job, on_k8s_submission_error
 from backend.app.local_jobs import run_local_job_sync
+from backend.app.metrics import ACTIVE_JOBS
 from backend.app.routing import (
     UnsupportedUploadTypeError,
     UploadRoute,
