@@ -46,7 +46,7 @@ if ($Mode -eq "local") {
             --env "MINIO_ROOT_USER=$AccessKey" `
             --env "MINIO_ROOT_PASSWORD=$SecretKey" `
             --volume "${VolumeName}:/data" `
-            quay.io/minio/minio:latest server /data --console-address ":9001" | Out-Null
+            quay.io/minio/minio:RELEASE.2024-10-13T13-34-11Z server /data --console-address ":9001" | Out-Null
     }
     Write-Host "MinIO is running (local mode)."
     Write-Host "  API:     http://localhost:9000"
@@ -105,6 +105,8 @@ Write-Host "Waiting for MinIO..."
 kubectl rollout status deployment/minio --timeout=120s
 Write-Host "Waiting for backend..."
 kubectl rollout status deployment/cern-ml-demo-backend --timeout=120s
+Write-Host "Waiting for kube-state-metrics..."
+kubectl rollout status deployment/kube-state-metrics --timeout=120s
 Write-Host "Waiting for Prometheus..."
 kubectl rollout status deployment/prometheus --timeout=120s
 Write-Host "Waiting for Grafana..."
@@ -116,10 +118,10 @@ if ($WithKServe) {
         throw "bash not found. KServe install script requires Git Bash or WSL."
     }
     bash "$Root/deploy/kserve/install.sh"
-    Write-Host "Deploying InferenceService (vllm-predictor)..."
+    Write-Host "Deploying InferenceService (vllm)..."
     kubectl apply -f "$Root\deploy\kserve\inferenceservice.yaml"
     Write-Host "Waiting for InferenceService to become ready (may take 5-10 min for model download)..."
-    kubectl wait inferenceservice/vllm-predictor --for=condition=Ready --timeout=600s -n default
+    kubectl wait inferenceservice/vllm --for=condition=Ready --timeout=600s -n default
 }
 
 Write-Host ""

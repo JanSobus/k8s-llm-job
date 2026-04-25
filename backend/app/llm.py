@@ -18,11 +18,14 @@ class LLMConnection:
 def resolve_llm_connection(settings: Settings) -> LLMConnection:
     match settings.llm_provider:
         case Provider.OPENAI:
-            api_key = (
+            raw_key = (
                 settings.openai_api_key.get_secret_value()
                 if settings.openai_api_key is not None
                 else None
             )
+            # Treat an empty env value (e.g. APP_OPENAI_API_KEY=) the same as
+            # missing — otherwise we would attempt a real call with "" and 401.
+            api_key = raw_key if raw_key else None
             return LLMConnection(
                 provider=Provider.OPENAI,
                 base_url=settings.openai_base_url,

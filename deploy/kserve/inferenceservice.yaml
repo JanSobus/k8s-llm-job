@@ -11,13 +11,15 @@
 #     - Add --tensor-parallel-size 2 for multi-GPU
 #
 # The backend reaches this endpoint at:
-#   http://vllm-predictor-default.default.svc.cluster.local/v1
-# (KServe raw-deployment mode service naming convention)
+#   http://vllm-predictor.default.svc.cluster.local/v1
+# (KServe RawDeployment mode names the predictor Service
+# `<inferenceservice-name>-predictor`, so the InferenceService here is
+# named `vllm` to keep the URL clean.)
 # Set APP_KSERVE_BASE_URL to match.
 apiVersion: serving.kserve.io/v1beta1
 kind: InferenceService
 metadata:
-  name: vllm-predictor
+  name: vllm
   namespace: default
   annotations:
     # Raw-deployment mode: no Knative, no queue-proxy sidecar.

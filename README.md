@@ -144,7 +144,7 @@ make load-test      # fire N concurrent chat requests
 | `APP_OPENAI_MODEL` | `gpt-4o-mini` | Override as needed |
 | `APP_OLLAMA_BASE_URL` | `http://localhost:11434/v1` | Ollama OpenAI-compatible endpoint |
 | `APP_OLLAMA_MODEL` | `qwen2.5:0.5b` | Any model pulled in Ollama |
-| `APP_KSERVE_BASE_URL` | `http://vllm-predictor-default.default.svc.cluster.local/v1` | In-cluster KServe endpoint |
+| `APP_KSERVE_BASE_URL` | `http://vllm-predictor.default.svc.cluster.local/v1` | In-cluster KServe endpoint |
 | `APP_KSERVE_MODEL` | `Qwen/Qwen2.5-0.5B-Instruct` | Must match InferenceService |
 | `APP_LLM_FAKE_MODE` | `true` | Bypass real LLM calls (default for safety) |
 

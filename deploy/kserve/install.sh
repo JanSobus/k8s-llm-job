@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Install KServe (standard mode, no Knative) into the active kubectl context.
 # Tested against kind cluster created by deploy/kind/cluster.yaml.
-# Run from the repo root.
+# Safe to run from any cwd; resolves manifest paths relative to itself.
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 KSERVE_VERSION="${KSERVE_VERSION:-0.13.1}"
 CERT_MANAGER_VERSION="${CERT_MANAGER_VERSION:-1.16.2}"
@@ -31,8 +33,8 @@ helm upgrade --install kserve kserve/kserve \
   --wait
 
 echo "==> KServe installed. Applying vLLM ServingRuntime..."
-kubectl apply -f deploy/kserve/vllm-runtime.yaml
+kubectl apply -f "${SCRIPT_DIR}/vllm-runtime.yaml"
 
 echo "==> Done."
 echo "    Deploy an InferenceService with:"
-echo "    kubectl apply -f deploy/kserve/inferenceservice.yaml"
+echo "    kubectl apply -f ${SCRIPT_DIR}/inferenceservice.yaml"

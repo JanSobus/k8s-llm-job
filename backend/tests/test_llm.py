@@ -1,4 +1,5 @@
 import pytest
+from pydantic import SecretStr
 
 from backend.app.config import Provider, Settings
 from backend.app.llm import generate_chat_response, resolve_llm_connection
@@ -15,6 +16,21 @@ def test_resolve_openai_connection_without_key_uses_fake_mode() -> None:
 
     assert connection.provider == Provider.OPENAI
     assert connection.model == "gpt-4o-mini"
+    assert connection.fake_mode is True
+
+
+def test_resolve_openai_connection_with_empty_key_uses_fake_mode() -> None:
+    """Empty env value (APP_OPENAI_API_KEY=) must behave like a missing key."""
+    settings = Settings(
+        llm_provider=Provider.OPENAI,
+        llm_fake_mode=False,
+        openai_api_key=SecretStr(""),
+    )
+
+    connection = resolve_llm_connection(settings)
+
+    assert connection.provider == Provider.OPENAI
+    assert connection.api_key is None
     assert connection.fake_mode is True
 
 

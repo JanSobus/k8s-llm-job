@@ -167,9 +167,7 @@
       "fieldConfig": {
         "defaults": { "unit": "short", "color": { "mode": "thresholds" },
           "thresholds": { "mode": "absolute", "steps": [
-            { "color": "green", "value": null },
-            { "color": "yellow", "value": 2 },
-            { "color": "red", "value": 3 }
+            { "color": "green", "value": null }
           ]}
         },
         "overrides": []
@@ -179,17 +177,21 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "value_and_name", "colorMode": "background" },
       "targets": [
         {
-          "expr": "count(kube_pod_info{namespace='default', pod=~'cern-ml.*'}) by (pod)",
-          "legendFormat": "{{pod}}"
+          "expr": "count(kube_pod_info{namespace='default', pod=~'cern-ml.*'})",
+          "legendFormat": "demo pods"
+        },
+        {
+          "expr": "count(kube_pod_info{namespace='default', pod=~'.*worker.*'})",
+          "legendFormat": "worker pods"
         }
       ],
-      "title": "Demo pod count (default ns)",
+      "title": "Pod count (default ns)",
       "type": "stat"
     },
     {
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "fieldConfig": {
-        "defaults": { "unit": "bytes", "color": { "mode": "palette-classic" } },
+        "defaults": { "unit": "short", "color": { "mode": "palette-classic" } },
         "overrides": []
       },
       "gridPos": { "h": 8, "w": 8, "x": 8, "y": 19 },
@@ -197,29 +199,41 @@
       "options": { "legend": { "calcs": ["last"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
       "targets": [
         {
-          "expr": "container_memory_working_set_bytes{namespace='default', container=~'backend|worker'}",
-          "legendFormat": "{{pod}} / {{container}}"
+          "expr": "kube_deployment_status_replicas_available{namespace='default'}",
+          "legendFormat": "available — {{deployment}}"
+        },
+        {
+          "expr": "kube_deployment_spec_replicas{namespace='default'}",
+          "legendFormat": "desired — {{deployment}}"
         }
       ],
-      "title": "Container memory (working set)",
+      "title": "Deployment replicas (available vs desired)",
       "type": "timeseries"
     },
     {
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "fieldConfig": {
-        "defaults": { "unit": "percentunit", "min": 0, "max": 1, "color": { "mode": "palette-classic" } },
+        "defaults": { "unit": "short", "color": { "mode": "palette-classic" } },
         "overrides": []
       },
       "gridPos": { "h": 8, "w": 8, "x": 16, "y": 19 },
       "id": 12,
-      "options": { "legend": { "calcs": ["last"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "options": { "legend": { "calcs": ["last", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
       "targets": [
         {
-          "expr": "rate(container_cpu_usage_seconds_total{namespace='default', container=~'backend|worker'}[2m])",
-          "legendFormat": "{{pod}} / {{container}}"
+          "expr": "sum(kube_job_status_active{namespace='default'})",
+          "legendFormat": "active jobs"
+        },
+        {
+          "expr": "sum(kube_job_status_succeeded{namespace='default'})",
+          "legendFormat": "succeeded (cumulative)"
+        },
+        {
+          "expr": "sum(kube_job_status_failed{namespace='default'})",
+          "legendFormat": "failed (cumulative)"
         }
       ],
-      "title": "Container CPU usage",
+      "title": "Kubernetes Jobs (kube-state-metrics)",
       "type": "timeseries"
     }
   ],

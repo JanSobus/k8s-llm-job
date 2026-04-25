@@ -1,0 +1,28 @@
+# Keep the docker context small and ensure uv sync inside the image
+# is not shadowed by the developer's local virtualenv.
+.git
+.github
+.venv
+.pytest_cache
+.ruff_cache
+.pyright
+.playwright-mcp
+.vscode
+.idea
+__pycache__
+**/__pycache__
+*.pyc
+.env
+.env.local
+.coverage
+htmlcov
+dist
+build
+docs
+plan.md
+README.md
+AGENTS.md
+deploy
+scripts
+examples
+.dockerignore
