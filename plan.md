@@ -315,7 +315,7 @@ After `AGENTS.md` is created, it is reasonable to use a context-engineering/task
 
 ---
 
-## Implementation progress (as of 2026-04-25)
+## Implementation progress (updated 2026-04-25)
 
 Legend: ✅ done · ⚠️ partial/deviation · ❌ not yet started
 
@@ -329,19 +329,19 @@ Legend: ✅ done · ⚠️ partial/deviation · ❌ not yet started
 - [x] `backend/app/schemas.py` — `ChatRequest`, `ChatResponse`, extraction schemas
 - [x] `/chat` POST endpoint returning HTMX HTML fragment ⚠️ plain POST/response, **not SSE streaming**
 - [x] `backend/app/templates/index.html` — HTMX UI with basic styling ⚠️ `chat.html` and `results.html` not separated out
-- [x] `scripts/demo.ps1`, `scripts/up.ps1`, `scripts/down.ps1`, `scripts/load-test.ps1`
+- [x] `scripts/demo.ps1`, `scripts/up.ps1`, `scripts/down.ps1`, `scripts/load-test.ps1` (updated with `-Mode` / `-Profile` params)
 - [x] `examples/sample.csv` and `examples/sample.pdf` fixtures
 - [x] Unit tests: `test_config.py`, `test_llm.py`, `test_routing.py`, `test_storage.py`, `test_jobs.py`, `test_upload.py`
-- [ ] SSE streaming on `/chat` (`text/event-stream`, token-by-token via `EventSourceResponse`)
-- [ ] PydanticAI agent with tool use (job-status check, summarise-latest-upload tools)
-- [ ] GitHub repo created with `gh` and code pushed
+- [x] GitHub repo created with `gh` and code pushed → https://github.com/JanSobus/cern-ml-demo
+- [ ] SSE streaming on `/chat` (`text/event-stream`, token-by-token) — deferred (low JD signal)
+- [ ] PydanticAI agent with tool use (job-status check, summarise-latest-upload) — deferred (low JD signal)
 
 ### Day 2 — k8s Jobs + workers
 
 - [x] `backend/app/routing.py` — MIME → `UploadRoute` / worker-template selector
 - [x] `backend/app/jobs.py` — `JobStore` protocol + `MinioJobStore` implementation
 - [x] `backend/app/k8s_jobs.py` — `kubernetes-asyncio` Job creation and submission
-- [x] `backend/app/local_jobs.py` — background-thread fallback for local dev (not in original plan; useful addition)
+- [x] `backend/app/local_jobs.py` — background-thread fallback for local dev
 - [x] `backend/app/uploads.py` — `/upload`, `/jobs/{id}`, `/jobs/{id}/fragment`, `/jobs/{id}/result` endpoints
 - [x] `backend/app/storage.py` — MinIO / S3-compatible object storage client
 - [x] `workers/pdf/main.py` + `Dockerfile` — PyMuPDF extraction worker
@@ -351,28 +351,34 @@ Legend: ✅ done · ⚠️ partial/deviation · ❌ not yet started
 - [x] `deploy/app/job-template-pdf.yaml` and `job-template-tabular.yaml`
 - [x] `deploy/app/minio.yaml`
 - [x] Upload size limits, MIME allowlist, safe object keys, clear error states
-- [ ] `deploy/app/backend-deploy.yaml` — backend Deployment + Service manifest
-- [ ] `deploy/kind/cluster.yaml` — kind cluster config with port mappings
+- [x] `backend/Dockerfile` — uv-based backend image (`cern-ml-demo-backend:local`)
+- [x] `deploy/app/backend-deploy.yaml` — Deployment + NodePort Service + ConfigMap/Secret
+- [x] `deploy/kind/cluster.yaml` — kind cluster config with NodePort mappings (8000/9000/9001/9090/3000/8080)
+- [x] `Makefile` updated: `build-backend`, `build-images`, `kind-up`, `kind-down`
 - [ ] End-to-end smoke test on kind with OpenAI provider
 
 ### Day 3 — KServe + vLLM
 
-- [ ] `deploy/kserve/install.sh` — KServe + dependencies via helm
-- [ ] `deploy/kserve/inferenceservice.yaml` — vLLM `InferenceService`, CPU-friendly small model
-- [ ] Validate `/chat` against in-cluster KServe endpoint
-- [ ] Workers default to KServe provider in cluster
-- [ ] HPA / KServe autoscaling configured or documented
+- [x] `deploy/kserve/install.sh` — installs cert-manager + KServe via Helm (standard/raw-deployment mode)
+- [x] `deploy/kserve/vllm-runtime.yaml` — custom `ServingRuntime` with explicit CPU/GPU vLLM flags
+- [x] `deploy/kserve/inferenceservice.yaml` — `InferenceService` for `Qwen2.5-0.5B-Instruct`; concurrency-based HPA (minReplicas=1, maxReplicas=3); GPU expansion documented in comments
+- [x] `scripts/up.ps1 -WithKServe` — runs install.sh, deploys InferenceService, waits for Ready
+- [ ] Validate `/chat` end-to-end against in-cluster KServe endpoint
+- [ ] Workers: document/configure KServe as default provider in cluster env vars
 
 ### Day 4 — Observability, polish, write-up
 
-- [ ] `backend/app/metrics.py` — `prometheus_client` custom metrics (chat latency, active jobs, job duration)
-- [ ] `/metrics` Prometheus exposition endpoint wired into `main.py`
+- [x] `backend/app/metrics.py` — `CHAT_REQUESTS`, `CHAT_LATENCY`, `ACTIVE_JOBS`, `JOB_COMPLETIONS`, `JOB_DURATION`
+- [x] `GET /metrics` Prometheus exposition endpoint in `main.py`
+- [x] `backend/app/chat.py` — instrumented with chat latency + success/error counts
+- [x] `pyproject.toml` — `venvPath`/`venv` added to `[tool.pyright]`; pyright reports 0 errors
+- [ ] `backend/app/uploads.py` — instrument job lifecycle metrics (`ACTIVE_JOBS`, `JOB_COMPLETIONS`, `JOB_DURATION`)
 - [ ] `deploy/observability/prometheus.yaml`
 - [ ] `deploy/observability/grafana-dashboard.json`
-- [ ] `docs/architecture.png`
 - [ ] `docs/design-notes.md` (KServe rationale, multi-tenancy, RAG path, GPU path)
 - [ ] `docs/benchmark.md` (local results + limitations)
 - [ ] `docs/demo-script.md` (reviewer walkthrough)
+- [ ] `docs/architecture.png`
 - [ ] `.github/workflows/ci.yml` (ruff lint, pyright, pytest, image builds)
 - [ ] `README.md` complete — architecture diagram, one-command demo, design notes
 - [ ] `v0.1.0` git tag
