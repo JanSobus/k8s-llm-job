@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import Response
 from fastapi.templating import Jinja2Templates
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest  # type: ignore[import-untyped]
 
 from backend.app.chat import router as chat_router
 from backend.app.config import Settings, get_settings
@@ -39,3 +40,8 @@ async def index(
 @app.get("/healthz")
 async def healthz(settings: Annotated[Settings, Depends(get_settings)]) -> HealthResponse:
     return HealthResponse(status="ok", app=settings.app_name)
+
+
+@app.get("/metrics")
+async def metrics() -> Response:
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)

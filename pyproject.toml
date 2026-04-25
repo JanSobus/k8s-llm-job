@@ -10,6 +10,7 @@ dependencies = [
     "jinja2>=3.1.6",
     "kubernetes-asyncio>=35.0.1",
     "polars>=1.40.1",
+    "prometheus-client>=0.25.0",
     "pydantic-ai>=1.87.0",
     "pydantic-settings>=2.14.0",
     "pymupdf>=1.27.2.3",
@@ -40,6 +41,8 @@ asyncio_mode = "auto"
 
 [tool.pyright]
 pythonVersion = "3.12"
+venvPath = "."
+venv = ".venv"
 include = ["backend", "workers"]
 exclude = [".venv", ".git", "__pycache__"]
 typeCheckingMode = "strict"
