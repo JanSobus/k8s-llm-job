@@ -1,0 +1,1 @@
+"""Tabular (CSV) worker."""

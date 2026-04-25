@@ -1,0 +1,36 @@
+# Reference manifest: the FastAPI app builds Jobs programmatically (see backend/app/k8s_jobs.py).
+# Apply after building and loading cern-ml-demo-worker-tabular:local into your cluster.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cern-ml-demo-wk-REPLACE_JOB_ID
+  labels:
+    app: cern-ml-demo
+    job-template: worker-tabular
+    job-id: REPLACE_JOB_ID
+spec:
+  ttlSecondsAfterFinished: 600
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: cern-ml-demo
+        job-template: worker-tabular
+        job-id: REPLACE_JOB_ID
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: worker
+          image: cern-ml-demo-worker-tabular:local
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "workers.tabular.main"]
+          env:
+            - name: JOB_ID
+              value: REPLACE_JOB_ID
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi

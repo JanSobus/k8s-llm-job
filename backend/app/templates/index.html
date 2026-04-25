@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ app_name }}</title>
+    <script src="https://unpkg.com/htmx.org@2.0.7"></script>
+    <style>
+      body {
+        max-width: 760px;
+        margin: 3rem auto;
+        padding: 0 1rem;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.5;
+      }
+      textarea {
+        width: 100%;
+        min-height: 8rem;
+      }
+      button {
+        margin-top: 0.75rem;
+        padding: 0.55rem 0.9rem;
+      }
+      .meta {
+        color: #555;
+        font-size: 0.9rem;
+      }
+      .response-card {
+        margin-top: 1rem;
+        padding: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 0.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>{{ app_name }}</h1>
+      <p class="meta">
+        Provider: <strong>{{ provider }}</strong>,
+        model: <strong>{{ model }}</strong>,
+        fake mode: <strong>{{ fake_mode }}</strong>
+      </p>
+
+      <form hx-post="/chat" hx-target="#chat-response" hx-swap="innerHTML">
+        <label for="message">Message</label>
+        <textarea id="message" name="message" required>Summarise the purpose of this demo.</textarea>
+        <button type="submit">Send</button>
+      </form>
+
+      <div id="chat-response"></div>
+
+      <h2>Upload Workload</h2>
+      <p class="meta">
+        Upload a PDF or CSV. The backend stores it in MinIO, records job metadata, then runs the matching
+        worker (&ldquo;local&rdquo; mode in-process, or Kubernetes Jobs when configured). Status below refreshes
+        automatically.
+      </p>
+      <form hx-post="/upload" hx-encoding="multipart/form-data" hx-target="#upload-response" hx-swap="innerHTML">
+        <label for="file">PDF or CSV file</label>
+        <input id="file" type="file" name="file" accept=".pdf,.csv,application/pdf,text/csv" required>
+        <button type="submit">Upload</button>
+      </form>
+
+      <div id="upload-response"></div>
+    </main>
+  </body>
+</html>

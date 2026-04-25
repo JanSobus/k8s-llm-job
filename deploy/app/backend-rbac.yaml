@@ -1,0 +1,34 @@
+# Grant the backend (FastAPI) permission to create Jobs and read Pods in a namespace.
+# Bind ServiceAccount cern-ml-demo-backend in your deployment; adjust namespace as needed.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cern-ml-demo-backend
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cern-ml-demo-backend-jobs
+  namespace: default
+rules:
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cern-ml-demo-backend-jobs
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: cern-ml-demo-backend
+    namespace: default
+roleRef:
+  kind: Role
+  name: cern-ml-demo-backend-jobs
+  apiGroup: rbac.authorization.k8s.io
