@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  lint-typecheck-test:
+    name: Lint / typecheck / test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Lint (ruff)
+        run: uv run ruff check .
+
+      - name: Type check (pyright)
+        run: uv run pyright
+
+      - name: Tests (pytest)
+        run: uv run pytest --tb=short -q
+
+  build-images:
+    name: Build Docker images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: false
+          tags: cern-ml-demo-backend:local
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build worker-pdf image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: workers/pdf/Dockerfile
+          push: false
+          tags: cern-ml-demo-worker-pdf:local
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build worker-tabular image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: workers/tabular/Dockerfile
+          push: false
+          tags: cern-ml-demo-worker-tabular:local
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
