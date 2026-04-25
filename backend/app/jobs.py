@@ -3,6 +3,7 @@ from enum import StrEnum
 from typing import Protocol
 from uuid import uuid4
 
+from backend.app.metrics import ACTIVE_JOBS, JOB_COMPLETIONS, JOB_DURATION
 from backend.app.routing import UploadRoute
 from backend.app.schemas import JobRecord
 from backend.app.storage import ObjectStorage, job_metadata_key, job_result_key, upload_object_key
@@ -44,6 +45,18 @@ class JobStore(Protocol):
 
 def _now_iso() -> str:
     return datetime.now(UTC).isoformat()
+
+
+def _record_completion(record: JobRecord, status: JobStatus) -> None:
+    wt = record.worker_type.value
+    ACTIVE_JOBS.labels(worker_type=wt).dec()
+    JOB_COMPLETIONS.labels(worker_type=wt, status=status.value).inc()
+    try:
+        created = datetime.fromisoformat(record.created_at)
+        duration = (datetime.now(UTC) - created).total_seconds()
+        JOB_DURATION.labels(worker_type=wt).observe(duration)
+    except (ValueError, TypeError):
+        pass
 
 
 class MinioJobStore:
@@ -105,10 +118,14 @@ class MinioJobStore:
         return self.update_job(job_id, status=JobStatus.RUNNING.value, message=message)
 
     def mark_succeeded(self, job_id: str, message: str | None = "Succeeded.") -> JobRecord:
-        return self.update_job(job_id, status=JobStatus.SUCCEEDED.value, message=message)
+        record = self.update_job(job_id, status=JobStatus.SUCCEEDED.value, message=message)
+        _record_completion(record, JobStatus.SUCCEEDED)
+        return record
 
     def mark_failed(self, job_id: str, message: str | None = "Failed.") -> JobRecord:
-        return self.update_job(job_id, status=JobStatus.FAILED.value, message=message)
+        record = self.update_job(job_id, status=JobStatus.FAILED.value, message=message)
+        _record_completion(record, JobStatus.FAILED)
+        return record
 
 
 def get_job_store(storage: ObjectStorage) -> JobStore:
