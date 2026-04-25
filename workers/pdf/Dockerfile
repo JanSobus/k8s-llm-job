@@ -8,4 +8,4 @@ COPY pyproject.toml uv.lock ./
 COPY backend ./backend
 COPY workers ./workers
 RUN uv sync --frozen --no-dev --extra worker-pdf
-CMD ["python", "-m", "workers.pdf.main"]
+CMD ["uv", "run", "--frozen", "--no-dev", "python", "-m", "workers.pdf.main"]
