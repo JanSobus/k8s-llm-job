@@ -1,0 +1,10 @@
+{% for msg in messages %}
+  {% if msg.role != "system" %}
+  <div style="margin-bottom:0.75rem;{% if msg.role == 'user' %}text-align:right;{% endif %}">
+    <span style="display:inline-block;max-width:85%;padding:0.5rem 0.75rem;border-radius:0.5rem;
+      {% if msg.role == 'user' %}background:#e3f2fd;{% else %}background:#f5f5f5;border:1px solid #ddd;{% endif %}
+      font-size:0.9rem;white-space:pre-wrap;word-break:break-word;">{{ msg.content }}</span>
+    <div class="meta" style="font-size:0.75rem;margin-top:0.1rem;">{{ msg.role }}</div>
+  </div>
+  {% endif %}
+{% endfor %}

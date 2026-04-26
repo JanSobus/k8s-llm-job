@@ -1,22 +1,26 @@
-apiVersion: v1
+﻿apiVersion: v1
 kind: ConfigMap
 metadata:
   name: backend-config
   namespace: default
 data:
   APP_LLM_PROVIDER: "openai"
-  APP_LLM_FAKE_MODE: "false"
+  APP_LLM_FAKE_MODE: "true"
   APP_OPENAI_BASE_URL: "https://api.openai.com/v1"
   APP_OPENAI_MODEL: "gpt-4o-mini"
+  APP_KSERVE_BASE_URL: "http://vllm-predictor.default.svc.cluster.local/v1"
+  APP_KSERVE_MODEL: "Qwen/Qwen2.5-0.5B-Instruct"
   APP_MINIO_ENDPOINT: "http://minio.default.svc.cluster.local:9000"
-  APP_MINIO_BUCKET: "cern-ml-demo"
+  APP_MINIO_BUCKET: "k8s-llm-job"
   APP_MINIO_SECURE: "false"
   APP_JOB_EXECUTION_MODE: "kubernetes"
   APP_BACKEND_KUBERNETES_IN_CLUSTER: "true"
   APP_KUBERNETES_NAMESPACE: "default"
-  APP_WORKER_IMAGE_PDF: "cern-ml-demo-worker-pdf:local"
-  APP_WORKER_IMAGE_TABULAR: "cern-ml-demo-worker-tabular:local"
+  APP_WORKER_IMAGE_PDF: "k8s-llm-job-worker-pdf:local"
+  APP_WORKER_IMAGE_TABULAR: "k8s-llm-job-worker-tabular:local"
   APP_JOB_TTL_SECONDS_AFTER_FINISHED: "600"
+  APP_WORKER_POLL_TIMEOUT_SECONDS: "300"
+  APP_GRAFANA_URL: "http://localhost:3000"
 ---
 apiVersion: v1
 kind: Secret
@@ -32,27 +36,27 @@ stringData:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cern-ml-demo-backend
+  name: k8s-llm-job-backend
   namespace: default
   labels:
-    app: cern-ml-demo
+    app: k8s-llm-job
     component: backend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cern-ml-demo
+      app: k8s-llm-job
       component: backend
   template:
     metadata:
       labels:
-        app: cern-ml-demo
+        app: k8s-llm-job
         component: backend
     spec:
-      serviceAccountName: cern-ml-demo-backend
+      serviceAccountName: k8s-llm-job-backend
       containers:
         - name: backend
-          image: cern-ml-demo-backend:local
+          image: k8s-llm-job-backend:local
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -85,15 +89,15 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: cern-ml-demo-backend
+  name: k8s-llm-job-backend
   namespace: default
   labels:
-    app: cern-ml-demo
+    app: k8s-llm-job
     component: backend
 spec:
   type: NodePort
   selector:
-    app: cern-ml-demo
+    app: k8s-llm-job
     component: backend
   ports:
     - name: http

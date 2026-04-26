@@ -1,6 +1,6 @@
 # Design Notes
 
-Architecture and decision rationale for the CERN ML Demo.
+Architecture and decision rationale for K8s LLM Job.
 
 ---
 
@@ -15,7 +15,7 @@ The provider model has three tiers:
 | `ollama` | Local developer runtime | Offline development, no k8s needed |
 | `kserve` | Platform-owned, autoscaled serving | Production-equivalent demo path |
 
-KServe is **not** used here as a proxy to OpenAI or as a caching layer. Its value in this demo is identical to its value at CERN: providing a **Kubernetes-native lifecycle** for self-hosted models — versioned InferenceServices, rollout/rollback via `kubectl`, concurrency-based HPA, and a single `/v1/chat/completions`-compatible endpoint the rest of the stack doesn't need to know about.
+KServe is **not** used here as a proxy to OpenAI or as a caching layer. Its value in this demo is identical to its value at CERN: providing a **Kubernetes-native lifecycle** for self-hosted models — versioned InferenceServices, rollout/rollback via `kubectl`, HPA-backed scaling, and a single `/v1/chat/completions`-compatible endpoint the rest of the stack doesn't need to know about.
 
 ---
 
@@ -83,7 +83,7 @@ The demo implements the first layer of multi-tenancy. A production CERN deployme
 
 | Control | Implementation |
 |---------|---------------|
-| Service accounts | `cern-ml-demo-backend` SA, `cern-ml-demo-backend-jobs` Role (batch/jobs, pods/log only) |
+| Service accounts | `k8s-llm-job-backend` SA, `k8s-llm-job-backend-jobs` Role (batch/jobs, pods/log only) |
 | Least-privilege RBAC | Role scoped to `default` namespace; no cluster-wide permissions |
 | Resource limits | CPU/memory requests and limits on backend, workers, MinIO, Prometheus |
 | Secrets | MinIO credentials in a Kubernetes Secret, not in ConfigMap or env literals |

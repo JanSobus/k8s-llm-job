@@ -1,0 +1,40 @@
+{% if attached_filename %}
+<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:0.4rem;padding:0.4rem 0.75rem;
+     margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between;font-size:0.85rem;">
+  <span>&#128206; Discussing: <strong>{{ attached_filename }}</strong></span>
+  <button
+    hx-post="/chat/detach"
+    hx-target="#chat-panel"
+    hx-swap="innerHTML"
+    hx-include="#history-field"
+    style="background:none;border:none;cursor:pointer;font-size:1rem;line-height:1;"
+    title="Remove context">&#10005;</button>
+</div>
+{% endif %}
+{% if error_message %}
+<div style="background:#fdecea;border:1px solid #f5c2c0;border-radius:0.4rem;padding:0.55rem 0.75rem;
+     margin-bottom:0.6rem;color:#8a1f17;font-size:0.9rem;">
+  {{ error_message }}
+</div>
+{% endif %}
+{% if notice_message %}
+<div style="background:#eef6ff;border:1px solid #b6d4fe;border-radius:0.4rem;padding:0.55rem 0.75rem;
+     margin-bottom:0.6rem;color:#0b4f8a;font-size:0.85rem;">
+  {{ notice_message }}
+</div>
+{% endif %}
+<form hx-post="/chat" hx-target="#chat-panel" hx-swap="innerHTML">
+  <input type="hidden" id="history-field" name="history" value="{{ messages_json | e }}">
+  <input type="hidden" name="attached_filename" value="{{ attached_filename | e }}">
+  <textarea name="message" required placeholder="Ask something…"
+    style="width:100%;min-height:5rem;box-sizing:border-box;"></textarea>
+  <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+    <button type="submit">Send</button>
+    <button type="button"
+      hx-post="/chat/clear"
+      hx-target="#chat-panel"
+      hx-swap="innerHTML"
+      hx-params="none"
+      style="background:#f5f5f5;color:#555;">Clear conversation</button>
+  </div>
+</form>

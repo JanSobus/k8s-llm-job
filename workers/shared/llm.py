@@ -17,4 +17,4 @@ def run_llm_summary(user_prompt: str, settings: Settings) -> str | None:
 
 
 async def _chat(user_prompt: str, settings: Settings) -> str:
-    return await generate_chat_response(user_prompt, settings)
+    return await generate_chat_response([{"role": "user", "content": user_prompt}], settings)

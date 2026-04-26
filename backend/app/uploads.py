@@ -1,17 +1,18 @@
+import asyncio
 import html
 import json
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse
 from kubernetes_asyncio.client import ApiException  # type: ignore[import-untyped]
 
 from backend.app.config import JobExecutionMode, Settings, get_settings
 from backend.app.jobs import JobStore, get_job_store
-from backend.app.k8s_jobs import create_kubernetes_worker_job, on_k8s_submission_error
-from backend.app.local_jobs import run_local_job_sync
-from backend.app.metrics import ACTIVE_JOBS
+from backend.app.k8s_jobs import on_k8s_submission_error, submit_and_reconcile_kubernetes_job
+from backend.app.local_jobs import submit_local_job
+from backend.app.metrics import note_job_active
 from backend.app.routing import (
     UnsupportedUploadTypeError,
     UploadRoute,
@@ -20,6 +21,7 @@ from backend.app.routing import (
 )
 from backend.app.schemas import JobRecord
 from backend.app.storage import ObjectStorage, StorageError, get_storage
+from backend.app.tmpl import TEMPLATES
 
 LOG = logging.getLogger(__name__)
 
@@ -42,10 +44,28 @@ async def _run_k8s_submission(
 ) -> None:
     settings = get_settings()
     try:
-        await create_kubernetes_worker_job(job_id, route, settings)
+        await submit_and_reconcile_kubernetes_job(job_id, route, settings)
     except (OSError, ValueError, ApiException) as exc:
         LOG.exception("Kubernetes job submission failed for %s", job_id)
         on_k8s_submission_error(job_id, exc)
+
+
+@router.get("/jobs", response_class=HTMLResponse)
+async def list_jobs(
+    request: Request,
+    job_store: Annotated[JobStore, Depends(job_store_dependency)],
+) -> HTMLResponse:
+    jobs: list[JobRecord] = []
+    error: str | None = None
+    try:
+        jobs = await asyncio.to_thread(job_store.list_jobs, 20)
+    except StorageError:
+        error = "Could not load jobs from storage. Check MinIO and retry."
+    return HTMLResponse(
+        TEMPLATES.get_template("_job_list.html").render(
+            {"request": request, "jobs": jobs, "error": error}
+        )
+    )
 
 
 @router.post("/upload", response_class=HTMLResponse)
@@ -64,21 +84,31 @@ async def upload_file(
             raise ValueError(f"Unsupported content type: {content_type}")
         body = await _read_limited_upload(file, settings.upload_max_bytes)
         route = resolve_upload_route(filename, content_type, body[:4096])
-        record = job_store.create_queued_job(
+        record = await asyncio.to_thread(
+            job_store.build_queued_job,
             original_filename=original_filename,
             safe_filename=filename,
             content_type=content_type,
             route=route,
         )
-        storage.put_bytes(record.input_object_key, body, record.content_type)
-        ACTIVE_JOBS.labels(worker_type=record.worker_type.value).inc()
+        await asyncio.to_thread(
+            storage.put_bytes,
+            record.input_object_key,
+            body,
+            record.content_type,
+        )
+        record = await asyncio.to_thread(job_store.save_job, record)
+        note_job_active(record.job_id, record.worker_type.value)
     except (UnsupportedUploadTypeError, ValueError) as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return upload_error_response(str(exc))
     except StorageError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        return upload_error_response(
+            "Could not store the upload. Check MinIO and retry.",
+            detail=str(exc),
+        )
 
     if settings.job_execution_mode is JobExecutionMode.LOCAL:
-        background_tasks.add_task(run_local_job_sync, record.job_id, route.worker_type)
+        submit_local_job(record.job_id, route.worker_type, settings)
     elif settings.job_execution_mode is JobExecutionMode.KUBERNETES:
         background_tasks.add_task(_run_k8s_submission, record.job_id, route)
 
@@ -91,7 +121,7 @@ async def get_job(
     job_store: Annotated[JobStore, Depends(job_store_dependency)],
 ) -> JobRecord:
     try:
-        return job_store.get_job(job_id)
+        return await asyncio.to_thread(job_store.get_job, job_id)
     except (StorageError, ValueError) as exc:
         raise HTTPException(status_code=404, detail=f"Job not found: {job_id}") from exc
 
@@ -103,10 +133,17 @@ async def get_job_fragment(
     storage: Annotated[ObjectStorage, Depends(storage_dependency)],
 ) -> HTMLResponse:
     try:
-        job = job_store.get_job(job_id)
+        job = await asyncio.to_thread(job_store.get_job, job_id)
     except (StorageError, ValueError) as exc:
         raise HTTPException(status_code=404, detail=f"Job not found: {job_id}") from exc
-    return HTMLResponse(_render_job_fragment_html(job, storage))
+    result_payload: dict[str, object] | None = None
+    result_missing = False
+    if job.status == "succeeded" and job.result_object_key:
+        try:
+            result_payload = await asyncio.to_thread(storage.get_json, job.result_object_key)
+        except StorageError:
+            result_missing = True
+    return HTMLResponse(_render_job_fragment_html(job, result_payload, result_missing))
 
 
 @router.get("/jobs/{job_id}/result", response_class=HTMLResponse)
@@ -116,13 +153,13 @@ async def get_job_result_json_preview(
     storage: Annotated[ObjectStorage, Depends(storage_dependency)],
 ) -> HTMLResponse:
     try:
-        job = job_store.get_job(job_id)
+        job = await asyncio.to_thread(job_store.get_job, job_id)
     except (StorageError, ValueError) as exc:
         raise HTTPException(status_code=404, detail=f"Job not found: {job_id}") from exc
     if job.status != "succeeded" or not job.result_object_key:
         raise HTTPException(status_code=400, detail="Result not available yet")
     try:
-        payload = storage.get_json(job.result_object_key)
+        payload = await asyncio.to_thread(storage.get_json, job.result_object_key)
     except StorageError as exc:
         raise HTTPException(status_code=404, detail="Result object missing") from exc
     text = json.dumps(payload, indent=2, sort_keys=True)
@@ -168,7 +205,30 @@ def _render_job_card(record: JobRecord) -> str:
     )
 
 
-def _render_job_fragment_html(job: JobRecord, storage: ObjectStorage) -> str:
+def render_upload_error(message: str, *, detail: str | None = None) -> str:
+    detail_html = ""
+    if detail:
+        detail_html = f'<p class="meta">{html.escape(detail)}</p>'
+    return (
+        '<section class="response-card" role="alert" '
+        'style="border-color:#f5c2c0;background:#fdecea;color:#8a1f17;">'
+        "<h3>Upload not accepted</h3>"
+        f"<p>{html.escape(message)}</p>"
+        f"{detail_html}"
+        "</section>"
+    )
+
+
+def upload_error_response(message: str, *, detail: str | None = None) -> HTMLResponse:
+    # Return 200 so HTMX swaps the fragment into #upload-response without extra JS config.
+    return HTMLResponse(render_upload_error(message, detail=detail))
+
+
+def _render_job_fragment_html(
+    job: JobRecord,
+    result_payload: dict[str, object] | None,
+    result_missing: bool = False,
+) -> str:
     jid = html.escape(job.job_id)
     terminal = job.status in {"succeeded", "failed"}
     poll = "" if terminal else (
@@ -176,17 +236,16 @@ def _render_job_fragment_html(job: JobRecord, storage: ObjectStorage) -> str:
     )
     result_block = ""
     if job.status == "succeeded" and job.result_object_key:
-        try:
-            payload = storage.get_json(job.result_object_key)
-            text = json.dumps(payload, indent=2, sort_keys=True)
+        if result_missing:
+            result_block = "<p>Result key recorded but object not found yet.</p>"
+        elif result_payload is not None:
+            text = json.dumps(result_payload, indent=2, sort_keys=True)
             if len(text) > 1_200:
                 text = text[:1_200] + "\n… (truncated)"
             result_block = (
                 f'<h4>Result (preview)</h4><pre class="result-json">{html.escape(text)}</pre>'
                 f'<p><a href="/jobs/{jid}/result">View full result</a></p>'
             )
-        except StorageError:
-            result_block = "<p>Result key recorded but object not found yet.</p>"
     msg = ""
     if job.message:
         msg = f'<p class="meta">{html.escape(job.message)}</p>'

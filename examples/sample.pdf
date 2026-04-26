@@ -1,36 +1,47 @@
-%PDF-1.4
+%PDF-1.7
+%ÂµÂ¶
+% Written by MuPDF 1.27.2
+
 1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
+<</Type/Catalog/Pages 2 0 R/Info<</Producer(MuPDF 1.27.2)>>>>
 endobj
+
 2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+<</Type/Pages/Count 1/Kids[4 0 R]>>
 endobj
+
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 144] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+<</Font<</helv 5 0 R>>>>
 endobj
+
 4 0 obj
-<< /Length 74 >>
+<</Type/Page/MediaBox[0 0 612 792]/Rotate 0/Resources 3 0 R/Parent 2 0 R/Contents[6 0 R]>>
+endobj
+
+5 0 obj
+<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>
+endobj
+
+6 0 obj
+<</Length 108/Filter/FlateDecode>>
 stream
-BT
-/F1 12 Tf
-36 96 Td
-(CERN ML Demo sample upload fixture.) Tj
-ET
+xÚ‰1ƒ@{¿Â?Àç;Ö !
+¤4tHî¢	p¢€"MÞM±»³ô¥É)±‰3=Ø/jŽýüqRöÊÏ¡|rgY¥¬ÁùF…ªXFÂf‚m¬ößj¸¢ ·ÎJXw_>ÓÃi¡Ö£
 endstream
 endobj
-5 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
-endobj
+
 xref
-0 6
+0 7
 0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000241 00000 n 
-0000000365 00000 n 
+0000000042 00000 n 
+0000000120 00000 n 
+0000000172 00000 n 
+0000000213 00000 n 
+0000000320 00000 n 
+0000000409 00000 n 
+
 trailer
-<< /Size 6 /Root 1 0 R >>
+<</Size 7/Root 1 0 R/ID[<25C2AB19C3B4C3B7C28D684151C3BF37><FA2C97383914E8D0918809572AE42AD1>]>>
 startxref
-435
+586
 %%EOF

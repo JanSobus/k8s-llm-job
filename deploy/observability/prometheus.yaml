@@ -1,4 +1,4 @@
-# Prometheus + Grafana + kube-state-metrics for the cern-ml-demo kind cluster.
+﻿# Prometheus + Grafana + kube-state-metrics for the k8s-llm-job kind cluster.
 # Scrapes the FastAPI /metrics endpoint and cluster object metrics.
 #
 # Deploy: kubectl apply -f deploy/observability/prometheus.yaml
@@ -110,9 +110,9 @@ data:
       evaluation_interval: 15s
 
     scrape_configs:
-      - job_name: cern-ml-backend
+      - job_name: k8s-llm-job-backend
         static_configs:
-          - targets: ['cern-ml-demo-backend.default.svc.cluster.local:8000']
+          - targets: ['k8s-llm-job-backend.default.svc.cluster.local:8000']
         metrics_path: /metrics
 
       - job_name: kube-state-metrics
@@ -204,14 +204,14 @@ data:
     apiVersion: 1
     providers:
       - name: default
-        folder: CERN ML Demo
+        folder: K8s LLM Job
         type: file
         options:
           path: /var/lib/grafana/dashboards
 ---
 # grafana-dashboard-json ConfigMap is created by up.ps1 via:
 #   kubectl create configmap grafana-dashboard-json \
-#     --from-file=cern-ml-demo.json=deploy/observability/grafana-dashboard.json \
+#     --from-file=k8s-llm-job.json=deploy/observability/grafana-dashboard.json \
 #     --dry-run=client -o yaml | kubectl apply -f -
 ---
 apiVersion: apps/v1

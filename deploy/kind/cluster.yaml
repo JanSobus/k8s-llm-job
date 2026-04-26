@@ -1,6 +1,6 @@
-kind: Cluster
+﻿kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
-name: cern-ml-demo
+name: k8s-llm-job
 nodes:
   - role: control-plane
     extraPortMappings:
@@ -23,8 +23,4 @@ nodes:
       # Grafana
       - containerPort: 30300
         hostPort: 3000
-        protocol: TCP
-      # KServe / vLLM predictor
-      - containerPort: 31080
-        hostPort: 8080
         protocol: TCP

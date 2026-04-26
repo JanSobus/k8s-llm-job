@@ -51,10 +51,12 @@ def resolve_llm_connection(settings: Settings) -> LLMConnection:
             )
 
 
-async def generate_chat_response(message: str, settings: Settings) -> str:
+async def generate_chat_response(
+    messages: list[dict[str, str]], settings: Settings
+) -> str:
     connection = resolve_llm_connection(settings)
     if connection.fake_mode:
-        return fake_chat_response(message, connection)
+        return fake_chat_response(messages, connection)
 
     headers: dict[str, str] = {}
     if connection.api_key is not None:
@@ -62,11 +64,14 @@ async def generate_chat_response(message: str, settings: Settings) -> str:
 
     payload: dict[str, object] = {
         "model": connection.model,
-        "messages": [{"role": "user", "content": message}],
+        "messages": messages,
         "stream": False,
     }
 
-    async with httpx.AsyncClient(base_url=connection.base_url, timeout=30.0) as client:
+    async with httpx.AsyncClient(
+        base_url=connection.base_url,
+        timeout=settings.llm_timeout_seconds,
+    ) as client:
         response = await client.post("/chat/completions", headers=headers, json=payload)
         response.raise_for_status()
 
@@ -92,8 +97,9 @@ async def generate_chat_response(message: str, settings: Settings) -> str:
     return content_obj
 
 
-def fake_chat_response(message: str, connection: LLMConnection) -> str:
+def fake_chat_response(messages: list[dict[str, str]], connection: LLMConnection) -> str:
+    last = messages[-1]["content"] if messages else "(empty)"
     return (
         f"[fake {connection.provider.value}:{connection.model}] "
-        f"Received: {message.strip() or '(empty message)'}"
+        f"Received: {last.strip() or '(empty message)'}"
     )

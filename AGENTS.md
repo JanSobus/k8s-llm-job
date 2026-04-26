@@ -1,6 +1,6 @@
-# Agent Guidance
+﻿# Agent Guidance
 
-This project is a portfolio demo for the CERN IT-CD-PI-2026-63-LD Machine Learning Engineer role. Keep work aligned with `plan.md`: a reliable local FastAPI demo first, then Kubernetes Jobs, MinIO, KServe/vLLM, observability, and documentation.
+This project is a reference platform for LLM workloads on Kubernetes. Keep work aligned with `plan.md`: a reliable local FastAPI demo first, then Kubernetes Jobs, MinIO, KServe/vLLM, observability, and documentation.
 
 ## Tooling
 
@@ -27,9 +27,9 @@ This project is a portfolio demo for the CERN IT-CD-PI-2026-63-LD Machine Learni
 - Prefer HTMX + Jinja served by FastAPI; do not add a frontend build system.
 - Keep one root `pyproject.toml` initially, with dependency groups/extras as needed.
 - Use stable local image names when container work starts:
-  - `cern-ml-demo-backend:local`
-  - `cern-ml-demo-worker-pdf:local`
-  - `cern-ml-demo-worker-tabular:local`
+  - `k8s-llm-job-backend:local`
+  - `k8s-llm-job-worker-pdf:local`
+  - `k8s-llm-job-worker-tabular:local`
 - Windows PowerShell scripts in `scripts/*.ps1` are first-class demo entrypoints.
 
 ## Quality Bar

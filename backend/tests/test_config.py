@@ -12,6 +12,8 @@ def test_default_settings_use_openai_fake_mode() -> None:
     assert settings.llm_fake_mode is True
     assert settings.openai_model == "gpt-4o-mini"
     assert settings.minio_endpoint == "http://localhost:9000"
+    assert settings.llm_timeout_seconds == 60.0
+    assert settings.minio_connect_timeout_seconds == 3.0
     assert settings.job_execution_mode is JobExecutionMode.LOCAL
 
 

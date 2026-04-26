@@ -1,4 +1,4 @@
-from fastapi.testclient import TestClient
+﻿from fastapi.testclient import TestClient
 
 from backend.app.config import Provider, Settings, get_settings
 from backend.app.main import app
@@ -19,7 +19,17 @@ def test_index_renders() -> None:
     response = client.get("/")
 
     assert response.status_code == 200
-    assert "CERN ML Demo" in response.text
+    assert "K8s LLM Job" in response.text
+    assert "/static/htmx-lite.js" in response.text
+
+
+def test_static_htmx_lite_asset_is_served() -> None:
+    client = TestClient(app)
+
+    response = client.get("/static/htmx-lite.js")
+
+    assert response.status_code == 200
+    assert "Minimal local HTMX-compatible behavior" in response.text
 
 
 def test_chat_fake_mode() -> None:
@@ -48,8 +58,8 @@ def test_metrics_endpoint_exposes_custom_metrics() -> None:
     assert "text/plain" in response.headers["content-type"]
     body = response.text
     # All five metric families must be registered, even before any traffic
-    assert "cern_ml_chat_requests_total" in body
-    assert "cern_ml_chat_latency_seconds" in body
-    assert "cern_ml_active_jobs" in body
-    assert "cern_ml_job_completions_total" in body
-    assert "cern_ml_job_duration_seconds" in body
+    assert "k8s_llm_chat_requests_total" in body
+    assert "k8s_llm_chat_latency_seconds" in body
+    assert "k8s_llm_active_jobs" in body
+    assert "k8s_llm_job_completions_total" in body
+    assert "k8s_llm_job_duration_seconds" in body

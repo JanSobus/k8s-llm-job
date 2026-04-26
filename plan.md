@@ -1,4 +1,4 @@
-# CERN ML Demo — Implementation Plan
+﻿# K8s LLM Job — Implementation Plan
 
 ## Context
 
@@ -63,7 +63,7 @@ GPU utilisation is documented as part of the optional GPU expansion profile.
 - **Single root uv project first** — start with one root `pyproject.toml` and dependency groups/extras for backend, workers, dev, and optional kserve tooling. Only split into a uv workspace if package boundaries become genuinely useful.
 - **gh for repo management** — use the GitHub CLI for repository creation, remote setup, issue/PR checks, and any GitHub workflow interactions instead of managing those steps manually in the browser.
 - **Project guidance from day one** — scaffold `AGENTS.md` at the start from this plan so future agent sessions preserve the project goals, uv conventions, provider strategy, demo profiles, and scope guardrails.
-- **Stable local image names** — scripts and manifests should use fixed local tags from the start: `cern-ml-demo-backend:local`, `cern-ml-demo-worker-pdf:local`, and `cern-ml-demo-worker-tabular:local`.
+- **Stable local image names** — scripts and manifests should use fixed local tags from the start: `k8s-llm-job-backend:local`, `k8s-llm-job-worker-pdf:local`, and `k8s-llm-job-worker-tabular:local`.
 - **Deadline guardrail** — local KServe + vLLM is the highest-risk part. Use a CPU-friendly default model and keep a reliable OpenAI/Ollama demo path working at all times.
 
 ## Demo profiles
@@ -88,10 +88,10 @@ If HTMX feels unfamiliar mid-build, fall back to Streamlit on day 4 — the back
 
 ## Repository structure
 
-Location: `C:\Users\Jan\projects\cern-ml-demo`
+Location: `C:\Users\Jan\projects\k8s-llm-job`
 
 ```
-cern-ml-demo/
+k8s-llm-job/
 ├── README.md                    architecture diagram, one-command demo, design notes
 ├── AGENTS.md                    persistent agent guidance generated from this plan
 ├── Makefile                     convenience wrapper around scripts/*.ps1
@@ -311,7 +311,7 @@ After `AGENTS.md` is created, it is reasonable to use a context-engineering/task
 - Confirm Python 3.12 and latest `uv`, `ruff`, `pyright`, `pytest` are on PATH or available through `uvx`
 - Confirm Docker Desktop has enough resources (8GB RAM, 4 CPU minimum for the cluster)
 - Prefer 12-16GB Docker memory for `kserve-cpu`; otherwise use `local-fast`
-- Create/manage GitHub repo `cern-ml-demo` with `gh` (public)
+- Create/manage GitHub repo `k8s-llm-job` with `gh` (public)
 
 ---
 
@@ -332,7 +332,7 @@ Legend: ✅ done · ⚠️ partial/deviation · ❌ not yet started
 - [x] `scripts/demo.ps1`, `scripts/up.ps1`, `scripts/down.ps1`, `scripts/load-test.ps1` (updated with `-Mode` / `-Profile` params)
 - [x] `examples/sample.csv` and `examples/sample.pdf` fixtures
 - [x] Unit tests: `test_config.py`, `test_llm.py`, `test_routing.py`, `test_storage.py`, `test_jobs.py`, `test_upload.py`
-- [x] GitHub repo created with `gh` and code pushed → https://github.com/JanSobus/cern-ml-demo
+- [x] GitHub repo created with `gh` and code pushed → https://github.com/JanSobus/k8s-llm-job
 - [ ] SSE streaming on `/chat` (`text/event-stream`, token-by-token) — deferred (low JD signal)
 - [ ] PydanticAI agent with tool use (job-status check, summarise-latest-upload) — deferred (low JD signal)
 
@@ -351,7 +351,7 @@ Legend: ✅ done · ⚠️ partial/deviation · ❌ not yet started
 - [x] `deploy/app/job-template-pdf.yaml` and `job-template-tabular.yaml`
 - [x] `deploy/app/minio.yaml`
 - [x] Upload size limits, MIME allowlist, safe object keys, clear error states
-- [x] `backend/Dockerfile` — uv-based backend image (`cern-ml-demo-backend:local`)
+- [x] `backend/Dockerfile` — uv-based backend image (`k8s-llm-job-backend:local`)
 - [x] `deploy/app/backend-deploy.yaml` — Deployment + NodePort Service + ConfigMap/Secret
 - [x] `deploy/kind/cluster.yaml` — kind cluster config with NodePort mappings (8000/9000/9001/9090/3000/8080)
 - [x] `Makefile` updated: `build-backend`, `build-images`, `kind-up`, `kind-down`
@@ -361,7 +361,7 @@ Legend: ✅ done · ⚠️ partial/deviation · ❌ not yet started
 
 - [x] `deploy/kserve/install.sh` — installs cert-manager + KServe via Helm (standard/raw-deployment mode)
 - [x] `deploy/kserve/vllm-runtime.yaml` — custom `ServingRuntime` with explicit CPU/GPU vLLM flags
-- [x] `deploy/kserve/inferenceservice.yaml` — `InferenceService` for `Qwen2.5-0.5B-Instruct`; concurrency-based HPA (minReplicas=1, maxReplicas=3); GPU expansion documented in comments
+- [x] `deploy/kserve/inferenceservice.yaml` — `InferenceService` for `Qwen2.5-0.5B-Instruct`; CPU HPA (minReplicas=1, maxReplicas=3); GPU expansion documented in comments
 - [x] `scripts/up.ps1 -WithKServe` — runs install.sh, deploys InferenceService, waits for Ready
 - [ ] Validate `/chat` end-to-end against in-cluster KServe endpoint
 - [ ] Workers: document/configure KServe as default provider in cluster env vars

@@ -1,0 +1,6 @@
+id,energy_gev,particle_type,detector_hits
+1,125.3,higgs,847
+2,91.2,z_boson,1203
+3,173.1,top_quark,2891
+4,80.4,w_boson,1456
+5,0.511,electron,23

@@ -1,6 +1,6 @@
-# Benchmark Notes
+﻿# Benchmark Notes
 
-Local performance results and hardware assumptions for the CERN ML Demo.
+Local performance results and hardware assumptions for the K8s LLM Job.
 
 ---
 
@@ -16,9 +16,9 @@ Local performance results and hardware assumptions for the CERN ML Demo.
 
 ---
 
-## local-fast profile (provider = openai, gpt-4o-mini)
+## local-fast profile (provider = openai, gpt-4o-mini, fake mode off)
 
-Chat endpoint latency measured with `scripts/load-test.ps1` firing sequential requests.
+Chat endpoint latency measured with small `scripts/load-test.ps1` bursts posting to `/chat`.
 
 | Concurrency | p50 (ms) | p95 (ms) | Error rate |
 |-------------|----------|----------|------------|
@@ -40,7 +40,7 @@ Backend overhead (FastAPI handler, MinIO metadata write on upload) is < 10 ms lo
 
 ## kserve-cpu profile (provider = kserve, Qwen2.5-0.5B-Instruct, CPU)
 
-Running `Qwen/Qwen2.5-0.5B-Instruct` on CPU with `--dtype float32` inside a kind pod (Docker Desktop, 8 GB RAM, 4 vCPU).
+Running `Qwen/Qwen2.5-0.5B-Instruct` on CPU with `--dtype float32` inside a kind pod. The benchmark machine used Docker Desktop with 8 GB RAM and 4 vCPU, but the smoother full demo recommendation is 12-16 GB RAM.
 
 **Limitations of this setup:**
 - vLLM's CPU backend uses float32 tensors; throughput is ~10–20× lower than GPU.
@@ -70,7 +70,7 @@ These numbers are **for demonstration only**. A production deployment on an A100
 ## Methodology and limitations
 
 - All measurements are taken on a lightly loaded developer machine; results vary with background load.
-- `load-test.ps1` uses sequential HTTP requests; true concurrent load was not tested in CI.
+- `load-test.ps1` is a lightweight concurrent `/chat` smoke/load generator, not a rigorous benchmark harness.
 - The kserve-cpu numbers depend heavily on Docker Desktop resource allocation. With 12–16 GB RAM and 6–8 vCPU, throughput improves by ~30–50%.
 - No warmup requests were excluded from the p50/p95 calculations.
 - A production benchmark would use [vLLM's built-in benchmark tools](https://docs.vllm.ai/en/latest/serving/offline_inference.html) against a dedicated GPU node with `locust` or `k6` for load generation.

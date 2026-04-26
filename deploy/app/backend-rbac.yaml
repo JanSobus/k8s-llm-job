@@ -1,19 +1,19 @@
-# Grant the backend (FastAPI) permission to create Jobs and read Pods in a namespace.
-# Bind ServiceAccount cern-ml-demo-backend in your deployment; adjust namespace as needed.
+﻿# Grant the backend (FastAPI) permission to create Jobs and read Pods in a namespace.
+# Bind ServiceAccount k8s-llm-job-backend in your deployment; adjust namespace as needed.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: cern-ml-demo-backend
+  name: k8s-llm-job-backend
   namespace: default
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: cern-ml-demo-backend-jobs
+  name: k8s-llm-job-backend-jobs
   namespace: default
 rules:
   - apiGroups: ["batch"]
-    resources: ["jobs"]
+    resources: ["jobs", "jobs/status"]
     verbs: ["get", "list", "watch", "create", "delete"]
   - apiGroups: [""]
     resources: ["pods", "pods/log"]
@@ -22,13 +22,13 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: cern-ml-demo-backend-jobs
+  name: k8s-llm-job-backend-jobs
   namespace: default
 subjects:
   - kind: ServiceAccount
-    name: cern-ml-demo-backend
+    name: k8s-llm-job-backend
     namespace: default
 roleRef:
   kind: Role
-  name: cern-ml-demo-backend-jobs
+  name: k8s-llm-job-backend-jobs
   apiGroup: rbac.authorization.k8s.io

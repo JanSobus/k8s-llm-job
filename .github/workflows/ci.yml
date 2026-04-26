@@ -1,4 +1,4 @@
-name: CI
+﻿name: CI
 
 on:
   push:
@@ -18,10 +18,16 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --frozen
+        run: uv sync --frozen --all-extras
 
       - name: Lint (ruff)
         run: uv run ruff check .
+
+      - name: Shell syntax
+        run: |
+          for script in scripts/*.sh deploy/kserve/install.sh; do
+            bash -n "$script"
+          done
 
       - name: Type check (pyright)
         run: uv run pyright
@@ -44,7 +50,7 @@ jobs:
           context: .
           file: backend/Dockerfile
           push: false
-          tags: cern-ml-demo-backend:local
+          tags: k8s-llm-job-backend:local
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -54,7 +60,7 @@ jobs:
           context: .
           file: workers/pdf/Dockerfile
           push: false
-          tags: cern-ml-demo-worker-pdf:local
+          tags: k8s-llm-job-worker-pdf:local
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -64,6 +70,6 @@ jobs:
           context: .
           file: workers/tabular/Dockerfile
           push: false
-          tags: cern-ml-demo-worker-tabular:local
+          tags: k8s-llm-job-worker-tabular:local
           cache-from: type=gha
           cache-to: type=gha,mode=max

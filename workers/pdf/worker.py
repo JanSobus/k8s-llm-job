@@ -59,7 +59,7 @@ def run_pdf_job(
             job_id,
             message=f"PDF result written to {out_key}.",
         )
-    except (StorageError, OSError, RuntimeError) as exc:
+    except Exception as exc:  # noqa: BLE001 - worker must persist terminal status.
         _LOG.exception("PDF job failed: %s", job_id)
         try:
             store.mark_failed(job_id, message=f"PDF job failed: {exc}")

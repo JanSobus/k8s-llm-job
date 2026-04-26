@@ -1,0 +1,52 @@
+# Lightweight KServe smoke predictor.
+#
+# This keeps e2e tests fast by validating the OpenAI-compatible KServe contract
+# without pulling the much larger vLLM image. It intentionally uses the same
+# InferenceService name as the vLLM profile so the backend's default
+# APP_KSERVE_BASE_URL continues to resolve:
+#   http://vllm-predictor.default.svc.cluster.local/v1
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: vllm
+  namespace: default
+  annotations:
+    serving.kserve.io/deploymentMode: RawDeployment
+spec:
+  predictor:
+    minReplicas: 1
+    maxReplicas: 1
+    containers:
+      - name: kserve-container
+        image: k8s-llm-job-backend:local
+        imagePullPolicy: IfNotPresent
+        command:
+          - uv
+          - run
+          - --frozen
+          - --no-dev
+          - --extra
+          - backend
+          - uvicorn
+          - backend.app.kserve_smoke:app
+          - --host
+          - 0.0.0.0
+          - --port
+          - "8080"
+        ports:
+          - containerPort: 8080
+            protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 5
+          failureThreshold: 12
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: "1"
+            memory: 512Mi

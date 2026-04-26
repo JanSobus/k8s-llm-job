@@ -49,7 +49,7 @@ def test_resolve_ollama_connection() -> None:
 async def test_generate_chat_response_fake_mode() -> None:
     settings = Settings(llm_provider=Provider.KSERVE, llm_fake_mode=True)
 
-    response = await generate_chat_response("hello", settings)
+    response = await generate_chat_response([{"role": "user", "content": "hello"}], settings)
 
     assert "fake kserve" in response
     assert "hello" in response

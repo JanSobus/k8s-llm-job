@@ -1,4 +1,4 @@
-# Build from repo root: docker build -f workers/tabular/Dockerfile -t cern-ml-demo-worker-tabular:local .
+# Build from repo root: docker build -f workers/tabular/Dockerfile -t k8s-llm-job-worker-tabular:local .
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 WORKDIR /app
 ENV UV_LINK_MODE=copy
@@ -8,4 +8,4 @@ COPY pyproject.toml uv.lock ./
 COPY backend ./backend
 COPY workers ./workers
 RUN uv sync --frozen --no-dev --extra worker-tabular
-CMD ["uv", "run", "--frozen", "--no-dev", "python", "-m", "workers.tabular.main"]
+CMD ["uv", "run", "--frozen", "--no-dev", "--extra", "worker-tabular", "python", "-m", "workers.tabular.main"]

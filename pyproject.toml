@@ -1,7 +1,7 @@
 [project]
-name = "cern-ml-demo"
+name = "k8s-llm-job"
 version = "0.1.0"
-description = "CERN-oriented ML platform demo with FastAPI, Kubernetes Jobs, MinIO, and KServe/vLLM."
+description = "Reference LLM platform on Kubernetes: FastAPI, Kubernetes Jobs, MinIO, KServe/vLLM, Prometheus/Grafana."
 requires-python = ">=3.12"
 dependencies = []
 

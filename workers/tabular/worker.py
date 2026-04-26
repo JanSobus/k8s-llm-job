@@ -7,7 +7,6 @@ from typing import Any
 from typing import cast as typing_cast
 
 import polars as pl
-import polars.exceptions
 
 from backend.app.config import Settings
 from backend.app.jobs import MinioJobStore
@@ -91,7 +90,7 @@ def run_tabular_job(
             job_id,
             message=f"Tabular result written to {result_key_name}.",
         )
-    except (StorageError, OSError, polars.exceptions.PolarsError) as exc:
+    except Exception as exc:  # noqa: BLE001 - worker must persist terminal status.
         _LOG.exception("Tabular job failed: %s", job_id)
         try:
             store.mark_failed(job_id, message=f"Tabular job failed: {exc}")

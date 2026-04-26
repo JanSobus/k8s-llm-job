@@ -1,11 +1,12 @@
-# Reference manifest: the FastAPI app builds Jobs programmatically (see backend/app/k8s_jobs.py).
-# Apply after building and loading cern-ml-demo-worker-pdf:local into your cluster (e.g. kind).
+﻿# Reference manifest only: the FastAPI app builds runnable Jobs programmatically
+# (see backend/app/k8s_jobs.py) and injects MinIO/provider APP_* environment.
+# To run this manifest manually, mirror backend-config/backend-secrets env first.
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: cern-ml-demo-wk-REPLACE_JOB_ID
+  name: k8s-llm-job-wk-REPLACE_JOB_ID
   labels:
-    app: cern-ml-demo
+    app: k8s-llm-job
     job-template: worker-pdf
     job-id: REPLACE_JOB_ID
 spec:
@@ -14,14 +15,14 @@ spec:
   template:
     metadata:
       labels:
-        app: cern-ml-demo
+        app: k8s-llm-job
         job-template: worker-pdf
         job-id: REPLACE_JOB_ID
     spec:
       restartPolicy: Never
       containers:
         - name: worker
-          image: cern-ml-demo-worker-pdf:local
+          image: k8s-llm-job-worker-pdf:local
           imagePullPolicy: IfNotPresent
           command: ["python", "-m", "workers.pdf.main"]
           env:

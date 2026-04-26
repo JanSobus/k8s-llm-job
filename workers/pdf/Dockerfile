@@ -1,4 +1,4 @@
-# Build from repo root: docker build -f workers/pdf/Dockerfile -t cern-ml-demo-worker-pdf:local .
+# Build from repo root: docker build -f workers/pdf/Dockerfile -t k8s-llm-job-worker-pdf:local .
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 WORKDIR /app
 ENV UV_LINK_MODE=copy
@@ -8,4 +8,4 @@ COPY pyproject.toml uv.lock ./
 COPY backend ./backend
 COPY workers ./workers
 RUN uv sync --frozen --no-dev --extra worker-pdf
-CMD ["uv", "run", "--frozen", "--no-dev", "python", "-m", "workers.pdf.main"]
+CMD ["uv", "run", "--frozen", "--no-dev", "--extra", "worker-pdf", "python", "-m", "workers.pdf.main"]

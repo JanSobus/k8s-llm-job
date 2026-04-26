@@ -1,5 +1,7 @@
 from collections.abc import Mapping
 
+from backend.app.storage import StorageError
+
 
 class FakeStorage:
     def __init__(self) -> None:
@@ -17,11 +19,18 @@ class FakeStorage:
         self.json_objects[key] = dict(payload)
 
     def get_bytes(self, key: str) -> bytes:
+        if key not in self.objects:
+            raise StorageError(f"Object not found: {key}")
         return self.objects[key][0]
 
     def get_json(self, key: str) -> dict[str, object]:
+        if key not in self.json_objects:
+            raise StorageError(f"Object not found: {key}")
         return self.json_objects[key]
 
     def presigned_get_url(self, key: str, expires_in: int = 3600) -> str:
         return f"https://example.test/{key}?expires={expires_in}"
+
+    def list_keys(self, prefix: str) -> list[str]:
+        return [k for k in self.json_objects if k.startswith(prefix)]
 

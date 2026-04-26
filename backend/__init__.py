@@ -1,1 +1,1 @@
-"""Backend package for the CERN ML demo."""
+﻿"""Backend package for the K8s LLM Job."""

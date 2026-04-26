@@ -1,11 +1,11 @@
-{
+﻿{
   "__inputs": [],
   "__requires": [
     { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "11.0.0" },
     { "type": "datasource", "id": "prometheus", "name": "Prometheus", "version": "1.0.0" }
   ],
   "annotations": { "list": [] },
-  "description": "CERN ML Demo — chat latency, job metrics, serving health",
+  "description": "K8s LLM Job — chat latency, job metrics, serving health",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -33,7 +33,7 @@
       "options": { "legend": { "calcs": ["mean", "last"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
       "targets": [
         {
-          "expr": "sum(rate(cern_ml_chat_requests_total[1m])) by (provider, status)",
+          "expr": "sum(rate(k8s_llm_chat_requests_total[1m])) by (provider, status)",
           "legendFormat": "{{provider}} / {{status}}"
         }
       ],
@@ -51,15 +51,15 @@
       "options": { "legend": { "calcs": ["mean", "p95"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(cern_ml_chat_latency_seconds_bucket[5m])) by (le, provider))",
+          "expr": "histogram_quantile(0.50, sum(rate(k8s_llm_chat_latency_seconds_bucket[5m])) by (le, provider))",
           "legendFormat": "p50 {{provider}}"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(cern_ml_chat_latency_seconds_bucket[5m])) by (le, provider))",
+          "expr": "histogram_quantile(0.95, sum(rate(k8s_llm_chat_latency_seconds_bucket[5m])) by (le, provider))",
           "legendFormat": "p95 {{provider}}"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(cern_ml_chat_latency_seconds_bucket[5m])) by (le, provider))",
+          "expr": "histogram_quantile(0.99, sum(rate(k8s_llm_chat_latency_seconds_bucket[5m])) by (le, provider))",
           "legendFormat": "p99 {{provider}}"
         }
       ],
@@ -83,7 +83,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "colorMode": "background" },
       "targets": [
         {
-          "expr": "sum(rate(cern_ml_chat_requests_total{status='error'}[5m])) / sum(rate(cern_ml_chat_requests_total[5m]))",
+          "expr": "sum(rate(k8s_llm_chat_requests_total{status='error'}[5m])) / sum(rate(k8s_llm_chat_requests_total[5m]))",
           "legendFormat": "Error rate"
         }
       ],
@@ -108,7 +108,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "value_and_name", "colorMode": "background" },
       "targets": [
         {
-          "expr": "sum(cern_ml_active_jobs) by (worker_type)",
+          "expr": "sum(k8s_llm_active_jobs) by (worker_type)",
           "legendFormat": "{{worker_type}}"
         }
       ],
@@ -126,7 +126,7 @@
       "options": { "legend": { "calcs": ["mean", "last"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
       "targets": [
         {
-          "expr": "sum(rate(cern_ml_job_completions_total[5m])) by (worker_type, status)",
+          "expr": "sum(rate(k8s_llm_job_completions_total[5m])) by (worker_type, status)",
           "legendFormat": "{{worker_type}} / {{status}}"
         }
       ],
@@ -144,11 +144,11 @@
       "options": { "legend": { "calcs": ["mean"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(cern_ml_job_duration_seconds_bucket[10m])) by (le, worker_type))",
+          "expr": "histogram_quantile(0.50, sum(rate(k8s_llm_job_duration_seconds_bucket[10m])) by (le, worker_type))",
           "legendFormat": "p50 {{worker_type}}"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(cern_ml_job_duration_seconds_bucket[10m])) by (le, worker_type))",
+          "expr": "histogram_quantile(0.95, sum(rate(k8s_llm_job_duration_seconds_bucket[10m])) by (le, worker_type))",
           "legendFormat": "p95 {{worker_type}}"
         }
       ],
@@ -177,7 +177,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "value_and_name", "colorMode": "background" },
       "targets": [
         {
-          "expr": "count(kube_pod_info{namespace='default', pod=~'cern-ml.*'})",
+          "expr": "count(kube_pod_info{namespace='default', pod=~'k8s-llm-job.*'})",
           "legendFormat": "demo pods"
         },
         {
@@ -239,7 +239,7 @@
   ],
   "refresh": "10s",
   "schemaVersion": 39,
-  "tags": ["cern-ml-demo"],
+  "tags": ["k8s-llm-job"],
   "templating": {
     "list": [
       {
@@ -257,7 +257,7 @@
   "time": { "from": "now-30m", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
-  "title": "CERN ML Demo",
-  "uid": "cern-ml-demo-v1",
+  "title": "K8s LLM Job",
+  "uid": "k8s-llm-job-v1",
   "version": 1
 }
