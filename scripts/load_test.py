@@ -6,7 +6,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
 
 
@@ -45,7 +45,7 @@ def post_chat(url: str, message: str, index: int, timeout_seconds: int) -> Resul
     )
 
     try:
-        with urlopen(request, timeout=timeout_seconds) as response:
+        with urlopen(request, timeout=timeout_seconds) as response:  # nosec B310
             response.read()
             duration_ms = round((time.perf_counter() - started) * 1000, 2)
             status_code = response.status
@@ -84,9 +84,16 @@ def positive_int(value: str) -> int:
     return parsed
 
 
+def http_url(value: str) -> str:
+    parsed = urlparse(value)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise argparse.ArgumentTypeError("url must be an absolute http(s) URL")
+    return value
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Send concurrent POST requests to /chat.")
-    parser.add_argument("--url", default="http://localhost:8000/chat")
+    parser.add_argument("--url", type=http_url, default="http://localhost:8000/chat")
     parser.add_argument("--requests", type=positive_int, default=10)
     parser.add_argument("--concurrency", type=positive_int, default=5)
     parser.add_argument("--message", default="load-test ping")

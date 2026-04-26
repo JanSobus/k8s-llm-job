@@ -32,8 +32,17 @@ jobs:
       - name: Type check (pyright)
         run: uv run pyright
 
-      - name: Tests (pytest)
+      - name: Tests (pytest + coverage)
         run: uv run pytest --tb=short -q
+
+      - name: Security scan (Bandit)
+        run: uv run bandit -r backend workers scripts -x backend/tests,workers/tests -s B101
+
+      - name: Dependency audit
+        run: |
+          audit_requirements="$(mktemp)"
+          uv export --frozen --all-extras --group dev --format requirements-txt --output-file "$audit_requirements"
+          uv run pip-audit -r "$audit_requirements" --no-deps
 
   build-images:
     name: Build Docker images
@@ -73,3 +82,70 @@ jobs:
           tags: k8s-llm-job-worker-tabular:local
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  kserve-smoke:
+    name: KServe e2e smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - uses: azure/setup-helm@v4
+
+      - name: Install dependencies
+        run: uv sync --frozen --all-extras
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: k8s-llm-job
+          config: deploy/kind/cluster.yaml
+
+      - name: Build local images
+        run: |
+          docker build -f backend/Dockerfile -t k8s-llm-job-backend:local .
+          docker build -f workers/pdf/Dockerfile -t k8s-llm-job-worker-pdf:local .
+          docker build -f workers/tabular/Dockerfile -t k8s-llm-job-worker-tabular:local .
+
+      - name: Load images into kind
+        run: |
+          kind load docker-image k8s-llm-job-backend:local --name k8s-llm-job
+          kind load docker-image k8s-llm-job-worker-pdf:local --name k8s-llm-job
+          kind load docker-image k8s-llm-job-worker-tabular:local --name k8s-llm-job
+
+      - name: Deploy app and observability
+        run: |
+          kubectl apply -f deploy/app/backend-rbac.yaml
+          kubectl apply -f deploy/app/minio.yaml
+          kubectl apply -f deploy/app/backend-deploy.yaml
+          kubectl create configmap grafana-dashboard-json \
+            --from-file=k8s-llm-job.json=deploy/observability/grafana-dashboard.json \
+            --dry-run=client -o yaml | kubectl apply -f -
+          kubectl apply -f deploy/observability/prometheus.yaml
+          kubectl rollout status deployment/minio --timeout=120s
+          kubectl rollout status deployment/k8s-llm-job-backend --timeout=120s
+          kubectl rollout status deployment/kube-state-metrics --timeout=120s
+          kubectl rollout status deployment/prometheus --timeout=120s
+          kubectl rollout status deployment/grafana --timeout=120s
+
+      - name: Install KServe
+        run: bash deploy/kserve/install.sh
+
+      - name: Deploy smoke predictor
+        run: |
+          kubectl apply -f deploy/kserve/smoke-inferenceservice.yaml
+          kubectl wait inferenceservice/vllm --for=condition=Ready --timeout=300s -n default
+
+      - name: Switch backend to KServe
+        run: |
+          kubectl set env deployment/k8s-llm-job-backend \
+            APP_LLM_PROVIDER=kserve \
+            APP_LLM_FAKE_MODE=false
+          kubectl rollout status deployment/k8s-llm-job-backend --timeout=120s
+
+      - name: Run KServe smoke
+        run: uv run --all-extras python scripts/e2e_kserve_smoke.py

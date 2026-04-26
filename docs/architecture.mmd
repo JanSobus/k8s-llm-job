@@ -1,0 +1,21 @@
+flowchart TD
+    Browser["Browser (HTMX + Jinja2)"] -->|"HTML fragments"| Backend["FastAPI backend"]
+    Backend -->|"OpenAI-compatible chat completions"| ProviderRouter["LLM provider selection"]
+    ProviderRouter --> OpenAI["OpenAI managed provider"]
+    ProviderRouter --> Ollama["Ollama local provider"]
+    ProviderRouter --> KServe["KServe InferenceService"]
+    KServe --> VLLM["vLLM OpenAI API server"]
+
+    Backend -->|"stores uploads and metadata"| MinIO["MinIO S3-compatible storage"]
+    Backend -->|"creates batch/v1 Jobs"| Kubernetes["Kubernetes API"]
+    Kubernetes --> PdfWorker["PDF worker Job"]
+    Kubernetes --> TabularWorker["Tabular worker Job"]
+    PdfWorker -->|"reads input, writes result"| MinIO
+    TabularWorker -->|"reads input, writes result"| MinIO
+    PdfWorker -->|"same chat contract"| ProviderRouter
+    TabularWorker -->|"same chat contract"| ProviderRouter
+
+    Prometheus["Prometheus"] -->|"scrapes /metrics"| Backend
+    Prometheus -->|"scrapes /metrics"| VLLM
+    Prometheus -->|"scrapes kube-state-metrics"| Kubernetes
+    Grafana["Grafana dashboard"] --> Prometheus

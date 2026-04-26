@@ -363,8 +363,8 @@ Legend: ✅ done · ⚠️ partial/deviation · ❌ not yet started
 - [x] `deploy/kserve/vllm-runtime.yaml` — custom `ServingRuntime` with explicit CPU/GPU vLLM flags
 - [x] `deploy/kserve/inferenceservice.yaml` — `InferenceService` for `Qwen2.5-0.5B-Instruct`; CPU HPA (minReplicas=1, maxReplicas=3); GPU expansion documented in comments
 - [x] `scripts/up.ps1 -WithKServe` — runs install.sh, deploys InferenceService, waits for Ready
-- [ ] Validate `/chat` end-to-end against in-cluster KServe endpoint
-- [ ] Workers: document/configure KServe as default provider in cluster env vars
+- [x] Validate `/chat` end-to-end against in-cluster KServe endpoint (`scripts/e2e_kserve_smoke.py`, CI job)
+- [x] Workers: document/configure KServe as provider in cluster env vars
 
 ### Day 4 — Observability, polish, write-up
 
@@ -373,12 +373,12 @@ Legend: ✅ done · ⚠️ partial/deviation · ❌ not yet started
 - [x] `backend/app/chat.py` — instrumented with chat latency + success/error counts
 - [x] `pyproject.toml` — `venvPath`/`venv` added to `[tool.pyright]`; pyright reports 0 errors
 - [ ] `backend/app/uploads.py` — instrument job lifecycle metrics (`ACTIVE_JOBS`, `JOB_COMPLETIONS`, `JOB_DURATION`)
-- [ ] `deploy/observability/prometheus.yaml`
-- [ ] `deploy/observability/grafana-dashboard.json`
+- [x] `deploy/observability/prometheus.yaml`
+- [x] `deploy/observability/grafana-dashboard.json`
 - [ ] `docs/design-notes.md` (KServe rationale, multi-tenancy, RAG path, GPU path)
 - [ ] `docs/benchmark.md` (local results + limitations)
 - [ ] `docs/demo-script.md` (reviewer walkthrough)
-- [ ] `docs/architecture.png`
-- [ ] `.github/workflows/ci.yml` (ruff lint, pyright, pytest, image builds)
-- [ ] `README.md` complete — architecture diagram, one-command demo, design notes
+- [x] `docs/architecture.mmd`
+- [x] `.github/workflows/ci.yml` (ruff lint, pyright, pytest, image builds, security scans, KServe smoke)
+- [x] `README.md` complete — architecture overview, one-command demo, design notes
 - [ ] `v0.1.0` git tag

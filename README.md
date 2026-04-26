@@ -8,6 +8,8 @@ KServe/vLLM for self-hosted model serving, and Prometheus/Grafana for observabil
 
 ## Architecture
 
+Diagram source: [docs/architecture.mmd](docs/architecture.mmd).
+
 ```
 ┌───────────────────────────────────────────────┐
 │ Browser  (HTMX + Jinja2)                      │
@@ -143,7 +145,7 @@ If Ollama runs on Windows while the backend runs in WSL, `localhost:11434` may n
 
 ## Quick start — KServe on kind
 
-**Prerequisites:** Docker available from the active shell, Python 3.12, `uv`, `kind`, `kubectl`, and `bash`. Helm is optional; the KServe installer falls back to release manifests when Helm is not installed.
+**Prerequisites:** Docker available from the active shell, Python 3.12, `uv`, `kind`, `kubectl`, and `bash`. Helm is optional; the KServe installer falls back to release manifests when Helm is not installed. For the kind smoke profile, allocate at least 4 CPUs and 8 GB RAM to Docker Desktop. For the full vLLM profile, allocate 12-16 GB RAM.
 
 ### Fast KServe smoke
 
@@ -314,7 +316,7 @@ The backend exposes Prometheus metrics at `/metrics`:
 | `k8s_llm_job_completions_total` | Counter | `worker_type`, `status` |
 | `k8s_llm_job_duration_seconds` | Histogram | `worker_type` |
 
-The Grafana dashboard (`deploy/observability/grafana-dashboard.json`) visualises all five metric groups with chat latency percentiles, job completion rate, and container resource usage. It is provisioned automatically by `up.ps1 -Mode kind`.
+The Grafana dashboard (`deploy/observability/grafana-dashboard.json`) visualises backend metrics, job metrics, container resource usage, and vLLM serving metrics such as request rate, token throughput, queue depth, and latency. Backend metrics are always present; vLLM panels show data when the full KServe/vLLM profile is running. The dashboard is provisioned automatically by `up.ps1 -Mode kind` and `scripts/up.sh --mode kind`.
 
 ---
 

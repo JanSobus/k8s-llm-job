@@ -115,6 +115,11 @@ data:
           - targets: ['k8s-llm-job-backend.default.svc.cluster.local:8000']
         metrics_path: /metrics
 
+      - job_name: kserve-vllm
+        static_configs:
+          - targets: ['vllm-predictor.default.svc.cluster.local:80']
+        metrics_path: /metrics
+
       - job_name: kube-state-metrics
         static_configs:
           - targets: ['kube-state-metrics.default.svc.cluster.local:8080']

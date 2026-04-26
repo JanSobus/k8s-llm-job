@@ -8,7 +8,8 @@ Estimated time: 10–15 minutes for the local-fast path; 25–30 minutes with th
 ## 1. Repository overview (2 min)
 
 ```
-README.md           one-command start, architecture diagram, provider model
+README.md           one-command start, architecture overview, provider model
+docs/architecture.mmd  source architecture diagram
 docs/design-notes.md  architecture rationale (KServe, multi-tenancy, GPU path)
 backend/app/        FastAPI application — config, llm, chat, uploads, metrics
 workers/            PDF and tabular batch workers sharing the LLM contract
